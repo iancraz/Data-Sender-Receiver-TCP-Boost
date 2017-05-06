@@ -22,10 +22,21 @@ cliente::~cliente()
 //esta escuchando
 void cliente::ConectToServer(const char * ipServer, const char * portNumber)
 {
-	endpoint = clienteResolver->resolve(boost::asio::ip::tcp::resolver::query(ipServer, portNumber));
-	boost::asio::connect(*clienteSocket, endpoint);
-}
+	try 
+	{
+		endpoint = clienteResolver->resolve(boost::asio::ip::tcp::resolver::query(ipServer, portNumber));
+		boost::asio::connect(*clienteSocket, endpoint);
 
+	}
+	catch (std::exception a)
+	{
+		std::cout << "Error al conectarse con el servidor, recuerde que este deve estar escuchando el puerto" << std::endl;
+		exit(4);
+	
+	}
+	
+}
+ 
 //sendData()
 //recive un arreglo de char, que son lo elementos que mandara. tambien recive
 //un int con la cantidad de elementos que se necesitan enviar
