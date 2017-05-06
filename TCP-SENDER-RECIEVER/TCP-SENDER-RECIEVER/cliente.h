@@ -9,7 +9,9 @@ public:
 	cliente();
 	~cliente();
 	void ConectToServer(const char* ipServer="localhost", const char* portNumber="12345");
-	bool sendData(char * dataToSend, unsigned int sizeData);
+	bool sendData(char * dataToSend_t, unsigned int sizeData);
+	bool receiveDataForServidor(char * buffer_t, int bufferSize);
+	bool nonBlockinReceiveDataForServer(char * buffer_t, int bufferSize);
 	void writeCompletitionCallback(const boost::system::error_code & error, std::size_t transfered_bytes);
 private:
 	boost::asio::ip::tcp::resolver* clienteResolver;

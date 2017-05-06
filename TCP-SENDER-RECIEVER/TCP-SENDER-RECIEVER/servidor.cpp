@@ -13,6 +13,7 @@ servidor::servidor(UINT32 port)
 	conectionServerAceptor = new boost::asio::ip::tcp::acceptor(*ioServer,
 		boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), portNumber));//creo el aceptor del servidor
 	//std::cout << std::endl << "El puerto " << portNumber << " se creo" << std::endl;
+	serverResolver = new boost::asio::ip::tcp::resolver(*ioServer);
 }
 
 servidor::~servidor()
@@ -20,6 +21,7 @@ servidor::~servidor()
 	delete ioServer;
 	delete ServerSocket;
 	delete conectionServerAceptor;
+	delete serverResolver;
 }
 
 //waitForCliente()
@@ -100,6 +102,12 @@ bool charcomp(char * a, char * b, int size)
 	return true;
 }
 
+
+//previamente se deve llamar a waitforcleinte()
+//recive como paramteros un arreglo de char(buffer) y una int,
+//con la cantidad de elementos de dicho arreglo.
+//devuelve: true, si se recivio algo. false, si no se recivio nada
+//nota: NO ES BLOQUEANTE!!!!!!!!!!!!!!!!!!!!!!!!
 bool servidor::nonBlockinReceiveDataForCliente(char * buffer_t, int bufferSize)
 {
 	
@@ -120,10 +128,7 @@ bool servidor::nonBlockinReceiveDataForCliente(char * buffer_t, int bufferSize)
 	
 	if (false== charcomp(bufferToTest, bufferTemp,900))
 	{
-		for (size_t i = 0; i < bufferSize; i++)//transfiero la informacion de un buffer al otro
-		{
-			buffer_t[i] = bufferTemp[i];
-		}
+		cpychar(buffer_t, bufferTemp, 900);//copio el buffer
 		
 		return true;
 	}
@@ -138,5 +143,30 @@ void servidor::writeCompletitionCallback(const boost::system::error_code & error
 {
 	
 	std::cout << std::endl << "Write Callback called" << std::endl;
+}
+
+
+//sendData()
+//recive un arreglo de char, que son lo elementos que mandara. tambien recive
+//un int con la cantidad de elementos que se necesitan enviar
+//
+bool servidor::sendData(char * dataToSend_t, unsigned int sizeData)
+{
+	char DataToSend[900];
+
+	for (size_t i = 0; i < sizeData; i++)
+	{
+		DataToSend[i] = dataToSend_t[i];
+	}
+	std::cout << DataToSend[0];
+
+	boost::function<void(const boost::system::error_code&, std::size_t)> handler(
+		boost::bind(&servidor::writeCompletitionCallback, this,
+			boost::asio::placeholders::error,
+			boost::asio::placeholders::bytes_transferred));
+
+	boost::asio::async_write(*ServerSocket, boost::asio::buffer(DataToSend), handler);
+
+	return true;
 }
 
