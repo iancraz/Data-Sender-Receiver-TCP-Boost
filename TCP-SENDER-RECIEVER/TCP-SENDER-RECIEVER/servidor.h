@@ -13,6 +13,8 @@ public:
 	~servidor();
 	void waitForCliente();
 	bool receiveDataForCliente(char * buffer_t, int bufferSize);
+	bool nonBlockinReceiveDataForCliente(char * buffer_t, int bufferSize);
+	void writeCompletitionCallback(const boost::system::error_code& error, std::size_t transfered_bytes);
 private:
 	UINT32 portNumber;
 	boost::asio::io_service*  ioServer;

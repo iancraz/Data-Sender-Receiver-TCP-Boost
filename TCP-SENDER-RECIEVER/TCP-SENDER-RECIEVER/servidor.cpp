@@ -75,3 +75,68 @@ bool servidor::receiveDataForCliente(char * buffer_t, int bufferSize)
 
 	
 }
+
+
+
+void cpychar(char * a, char * b, int size)
+{
+	for (size_t i = 0; i < size; i++)
+	{
+		a[i] = b[i];
+	}
+
+}
+
+bool charcomp(char * a, char * b, int size)
+{
+	for (size_t i = 0; i < size; i++)
+	{
+		if (a[i] != b[i])
+		{
+			return false;
+		}
+
+	}
+	return true;
+}
+
+bool servidor::nonBlockinReceiveDataForCliente(char * buffer_t, int bufferSize)
+{
+	
+	UINT16 longitudDelMensaje = 0;
+	boost::system::error_code error;
+	char bufferTemp[900];
+	char bufferToTest[900];
+	cpychar(bufferTemp, bufferToTest, 900);
+	
+	
+	boost::function<void(const boost::system::error_code&, std::size_t)> handler(
+		boost::bind(&servidor::writeCompletitionCallback, this,
+			boost::asio::placeholders::error,
+			boost::asio::placeholders::bytes_transferred));
+
+	boost::asio::async_read(*ServerSocket, boost::asio::buffer(bufferTemp), handler);
+	//ServerSocket->async_read_some(boost::asio::buffer(bufferTemp), handler);
+	
+	if (false== charcomp(bufferToTest, bufferTemp,900))
+	{
+		for (size_t i = 0; i < bufferSize; i++)//transfiero la informacion de un buffer al otro
+		{
+			buffer_t[i] = bufferTemp[i];
+		}
+		
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+	
+}
+
+void servidor::writeCompletitionCallback(const boost::system::error_code & error, std::size_t transfered_bytes)
+{
+	
+	std::cout << std::endl << "Write Callback called" << std::endl;
+}
+

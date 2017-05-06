@@ -11,12 +11,17 @@ int main(void)
 	char buffRecive[SIZE_RECIVE];
 	
 
-	bool isServer = false;
+	bool isServer = true;
 	if (isServer)
 	{
 		server = new servidor;
 		server->waitForCliente();//bloqueante
-		server->receiveDataForCliente(buffRecive, SIZE_RECIVE);
+		//server->receiveDataForCliente(buffRecive, SIZE_RECIVE);
+		while (1) {
+			server->nonBlockinReceiveDataForCliente(buffRecive, SIZE_RECIVE);
+
+		}
+		
 		server->~servidor();
 		std::cout << "Recivi: " << buffRecive << std::endl;
 		std::cout << "Y en la ultima posicion: " << buffRecive[SIZE_SEND - 1] << std::endl;
@@ -27,6 +32,7 @@ int main(void)
 		buffSend[SIZE_SEND - 1] = 'A';
 		client = new cliente;
 		client->ConectToServer();
+		getchar();
 		client->sendData(buffSend, SIZE_SEND);
 		client->~cliente();
 		std::cout << "Envie: " << buffSend << std::endl;
