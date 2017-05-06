@@ -8,7 +8,7 @@ class cliente
 public:
 	cliente();
 	~cliente();
-	void ConectToServer(const char* ipServer, const char* portNumber);
+	void ConectToServer(const char* ipServer="localhost", const char* portNumber="12345");
 	bool sendData(char * dataToSend, unsigned int sizeData);
 	void writeCompletitionCallback(const boost::system::error_code & error, std::size_t transfered_bytes);
 private:
