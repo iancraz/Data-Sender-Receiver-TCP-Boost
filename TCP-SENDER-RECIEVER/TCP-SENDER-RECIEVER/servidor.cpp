@@ -55,6 +55,17 @@ size_t servidor::receiveDataForCliente(char * buffer_t, int bufferSize)
 	if (error)
 	{
 		longitudDelMensaje = MY_ERROR;
+	} else if (longitudDelMensaje <= bufferSize)//evaluo si entra en lo que me mandaron
+	{
+		for (size_t i = 0; i < longitudDelMensaje; i++)
+		{
+			buffer_t[i] = bufferTemp[i];
+		}
+
+	}
+	else
+	{
+		longitudDelMensaje = MY_ERROR;
 	}
 
 	return longitudDelMensaje;

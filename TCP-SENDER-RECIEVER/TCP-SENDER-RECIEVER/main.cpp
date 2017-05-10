@@ -17,11 +17,11 @@ int main(void)
 		size_t size = 0;
 		server = new servidor;
 		server->waitForCliente();//bloqueante
-		//server->receiveDataForCliente(buffRecive, SIZE_RECIVE);
-		while (size<=0) {
+		server->receiveDataForCliente(buffRecive, SIZE_RECIVE);
+		/*while (size<=0) {
 			size = server->nonBlockinReceiveDataForCliente(buffRecive, SIZE_RECIVE);
 
-		}
+		}*/
 		
 		server->~servidor();
 		std::cout << "Recivi: " << buffRecive << std::endl;
