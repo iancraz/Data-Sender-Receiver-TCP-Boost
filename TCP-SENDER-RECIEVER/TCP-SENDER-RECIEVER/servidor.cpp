@@ -13,15 +13,17 @@ servidor::servidor(UINT32 port)
 	conectionServerAceptor = new boost::asio::ip::tcp::acceptor(*ioServer,
 		boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), portNumber));//creo el aceptor del servidor
 	//std::cout << std::endl << "El puerto " << portNumber << " se creo" << std::endl;
-	serverResolver = new boost::asio::ip::tcp::resolver(*ioServer);
+	
 }
 
 servidor::~servidor()
 {
-	delete ioServer;
-	delete ServerSocket;
+	conectionServerAceptor->close();
+	ServerSocket->close();
 	delete conectionServerAceptor;
-	delete serverResolver;
+	delete ServerSocket;
+	delete ioServer;
+	
 }
 
 //waitForCliente()
@@ -31,6 +33,7 @@ servidor::~servidor()
 void servidor::waitForCliente()
 {
 	conectionServerAceptor->accept(*ServerSocket);
+	ServerSocket->non_blocking(true);
 }
 //receiveDataForCliente
 //previamente se deve llamar a waitforcleinte()
@@ -38,69 +41,27 @@ void servidor::waitForCliente()
 //con la cantidad de elementos de dicho arreglo.
 //si se puedo recivir toda la informacion devuelve un true, caso contrario
 //devuelve un false.
-bool servidor::receiveDataForCliente(char * buffer_t, int bufferSize)
+size_t servidor::receiveDataForCliente(char * buffer_t, int bufferSize)
 {
-	UINT16 longitudDelMensaje = 0;
+	size_t longitudDelMensaje = 0;
 	boost::system::error_code error;
 	char bufferTemp[900];
+	
 	do
 	{
-		longitudDelMensaje	= ServerSocket->read_some(boost::asio::buffer(bufferTemp), error);//recive la informacion del cliente y la guarda en bufferTemp
-
-	} while (error);
-
-	if (error != boost::asio::error::eof)
-	{
-		if (longitudDelMensaje <= bufferSize)
-		{
-			for (size_t i = 0; i < bufferSize; i++)//transfiero la informacion de un buffer al otro
-			{
-				buffer_t[i] = bufferTemp[i];
-			}
-			return true;
-		}
-		else// en caso que el buffer enviado por el usuario sea muy chico envio false
-		{
-			for (size_t i = 0; i < bufferSize; i++)//transfiero la informacion de un buffer al otro
-			{
-				buffer_t[i] = bufferTemp[i];
-			}
-			return false;
-		}
-
-	}
-	else
-	{
-		return false;
-	}
+		longitudDelMensaje=ServerSocket->read_some(boost::asio::buffer(bufferTemp, 900), error);
+	} while (error.value() == WSAEWOULDBLOCK);
 		
-
-	
-}
-
-
-
-void cpychar(char * a, char * b, int size)
-{
-	for (size_t i = 0; i < size; i++)
+	if (error)
 	{
-		a[i] = b[i];
+		longitudDelMensaje = MY_ERROR;
 	}
 
+	return longitudDelMensaje;
 }
 
-bool charcomp(char * a, char * b, int size)
-{
-	for (size_t i = 0; i < size; i++)
-	{
-		if (a[i] != b[i])
-		{
-			return false;
-		}
 
-	}
-	return true;
-}
+
 
 
 //previamente se deve llamar a waitforcleinte()
@@ -108,42 +69,43 @@ bool charcomp(char * a, char * b, int size)
 //con la cantidad de elementos de dicho arreglo.
 //devuelve: true, si se recivio algo. false, si no se recivio nada
 //nota: NO ES BLOQUEANTE!!!!!!!!!!!!!!!!!!!!!!!!
-bool servidor::nonBlockinReceiveDataForCliente(char * buffer_t, int bufferSize)
+size_t servidor::nonBlockinReceiveDataForCliente(char * buffer_t, int bufferSize)
 {
 	
-	UINT16 longitudDelMensaje = 0;
+	size_t longitudDelMensaje = 0;
 	boost::system::error_code error;
 	char bufferTemp[900];
-	char bufferToTest[900];
-	cpychar(bufferTemp, bufferToTest, 900);
-	
-	
-	boost::function<void(const boost::system::error_code&, std::size_t)> handler(
-		boost::bind(&servidor::writeCompletitionCallback, this,
-			boost::asio::placeholders::error,
-			boost::asio::placeholders::bytes_transferred));
 
-	boost::asio::async_read(*ServerSocket, boost::asio::buffer(bufferTemp), handler);
-	//ServerSocket->async_read_some(boost::asio::buffer(bufferTemp), handler);
+	longitudDelMensaje=ServerSocket->read_some(boost::asio::buffer(bufferTemp,900),error);
 	
-	if (false== charcomp(bufferToTest, bufferTemp,900))
+	if (error.value() == WSAEWOULDBLOCK)//si no se leyo nada devuelvo MY_EMPTY
 	{
-		cpychar(buffer_t, bufferTemp, 900);//copio el buffer
+		longitudDelMensaje = MY_EMPTY;
+	}
+	else if(error)
+	{
+		longitudDelMensaje = MY_ERROR;
+	}
+	else if (longitudDelMensaje != 0)//si se recivio mensaje
+	{
+		if (longitudDelMensaje <= bufferSize)//evaluo si entra en lo que me mandaron
+		{
+			for (size_t i = 0; i < longitudDelMensaje; i++)
+			{
+				buffer_t[i] = bufferTemp[i];
+			}
+
+		}
+		else
+		{
+			longitudDelMensaje = MY_ERROR;
+		}
 		
-		return true;
 	}
-	else
-	{
-		return false;
-	}
-	
+
+	return longitudDelMensaje;
 }
 
-void servidor::writeCompletitionCallback(const boost::system::error_code & error, std::size_t transfered_bytes)
-{
-	
-	std::cout << std::endl << "Write Callback called" << std::endl;
-}
 
 
 //sendData()
@@ -152,21 +114,19 @@ void servidor::writeCompletitionCallback(const boost::system::error_code & error
 //
 bool servidor::sendData(char * dataToSend_t, unsigned int sizeData)
 {
-	char DataToSend[900];
+	size_t len = 0;
+	boost::system::error_code error;
 
-	for (size_t i = 0; i < sizeData; i++)
+	len = ServerSocket->write_some(boost::asio::buffer(dataToSend_t, sizeData), error);
+	
+	if ((error.value() == WSAEWOULDBLOCK) || error)
 	{
-		DataToSend[i] = dataToSend_t[i];
+		return false;
 	}
-	std::cout << DataToSend[0];
-
-	boost::function<void(const boost::system::error_code&, std::size_t)> handler(
-		boost::bind(&servidor::writeCompletitionCallback, this,
-			boost::asio::placeholders::error,
-			boost::asio::placeholders::bytes_transferred));
-
-	boost::asio::async_write(*ServerSocket, boost::asio::buffer(DataToSend), handler);
-
-	return true;
+	else
+	{
+		return true;
+	}
+	
 }
 
