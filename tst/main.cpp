@@ -1,5 +1,5 @@
-#include "cliente.h"
-#include "servidor.h"
+#include "../src/cliente.h"
+#include "../src/servidor.h"
 #define SIZE_SEND 600
 #define SIZE_RECIVE 800
 // es el principal
@@ -9,7 +9,7 @@ int main(void)
 	cliente * client=NULL;
 	char buffSend[SIZE_SEND];
 	char buffRecive[SIZE_RECIVE];
-	
+
 
 	bool isServer = true;
 	if (isServer)
@@ -22,7 +22,7 @@ int main(void)
 			size = server->nonBlockinReceiveDataForCliente(buffRecive, SIZE_RECIVE);
 
 		}*/
-		
+
 		server->~servidor();
 		std::cout << "Recivi: " << buffRecive << std::endl;
 		std::cout << "Longitud: " << size << std::endl;
@@ -30,7 +30,7 @@ int main(void)
 	else
 	{
 		strcpy(buffSend, "provando el sittema de networking qon linea largaaaaaa");
-		
+
 		client = new cliente;
 		client->ConectToServer();
 		getchar();
@@ -39,8 +39,8 @@ int main(void)
 		std::cout << "Envie: " << buffSend << std::endl;
 
 	}
-	
-	
+
+
 
 
 	return 0;
