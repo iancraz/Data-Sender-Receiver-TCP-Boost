@@ -1,3 +1,20 @@
+/*
+Copyright (C) 2018  Ian Cruz Diaz
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "Client.h"
 
 Client::Client()
@@ -21,7 +38,7 @@ Client::~Client()
 //esta escuchando.
 void Client::ConnectToServer(const char * ipServer, const char * portNumber)
 {
-	try 
+	try
 	{
 		endpoint = this->clientResolver->resolve(boost::asio::ip::tcp::resolver::query(ipServer, portNumber));
 		boost::asio::connect(*clientSocket, endpoint);
@@ -31,9 +48,9 @@ void Client::ConnectToServer(const char * ipServer, const char * portNumber)
 		std::cout << "Error al conectarse con el servidor, recuerde que este debe estar escuchando el puerto" << std::endl;
 		exit(4);
 	}
-	this->clientSocket->non_blocking(true);	
+	this->clientSocket->non_blocking(true);
 }
- 
+
 /*sendData()
 recibe un arreglo de char, que son lo elementos que mandara. tambien recibe
 un int con la cantidad de elementos que se necesitan enviar
